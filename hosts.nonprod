@@ -39,6 +39,7 @@ masters
 nodes
 infras
 etcd
+glusterfs
 
 # Each master node should also be configured for etcd
 [etcd:children]
@@ -63,3 +64,9 @@ pro-osa-003-v.tld.xx openshift_node_group_name="node-config-compute" openshift_n
 pro-osi-001-v.tld.xx openshift_node_group_name="node-config-infra"
 pro-osi-002-v.tld.xx openshift_node_group_name="node-config-infra"
 pro-osi-003-v.tld.xx openshift_node_group_name="node-config-infra"
+
+[glusterfs]
+pro-osg-001-v.tld.xx glusterfs_ip=10.25.18.15 glusterfs_zone=1 glusterfs_devices='[ "/dev/sde" ]'
+pro-osg-002-v.tld.xx glusterfs_ip=10.25.18.16 glusterfs_zone=1 glusterfs_devices='[ "/dev/sde" ]'
+pro-osg-003-v.tld.xx glusterfs_ip=10.25.18.17 glusterfs_zone=1 glusterfs_devices='[ "/dev/sde" ]'
+pro-osg-004-v.tld.xx glusterfs_ip=10.25.18.18 glusterfs_zone=1 glusterfs_devices='[ "/dev/sde" ]'
