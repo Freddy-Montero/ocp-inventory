@@ -1,0 +1,58 @@
+---
+# Destroy ALL existing GlusterFS & Registry_GlusterFS resources. Wipe storage devices.
+# WARNING: THIS WILL DESTROY ANY DATA ON THOSE DEVICES #
+### openshift_storage_glusterfs_wipe: true
+
+# Container image to use for GlusterFS pods
+openshift_storage_glusterfs_image: registry.access.redhat.com/rhgs3/rhgs-server-rhel7
+openshift_storage_glusterfs_version: v3.11
+
+# Container image to use for glusterblock-provisioner pod, enterprise
+openshift_storage_glusterfs_block_image: registry.access.redhat.com/rhgs3/rhgs-gluster-block-prov-rhel7
+openshift_storage_glusterfs_block_version: v3.11
+
+# Container image to use for heketi pods, enterprise
+openshift_storage_glusterfs_heketi_image: registry.access.redhat.com/rhgs3/rhgs-volmanager-rhel7
+openshift_storage_glusterfs_heketi_version: v3.11
+
+# GlusterFS should be containerized
+# "native" means "containerized" here
+openshift_storage_glusterfs_is_native: true
+
+# Heketi should be containerized
+openshift_storage_glusterfs_heketi_is_native: true
+
+# Load the GlusterFS topology information into heketi
+openshift_storage_glusterfs_heketi_topology_load: true
+
+# GlusterFS Storage namespace
+openshift_storage_glusterfs_namespace: openshift-storage
+
+# Allows for the logical separation of the App GlusterFS group from other GlusterFS groups
+openshift_storage_glusterfs_name: appstorage
+
+## GlusterFS Block ##
+# Deploy glusterblock provisioner service
+openshift_storage_glusterfs_block_deploy: true
+
+# Automatically create a GlusterFS_Block volume.
+openshift_storage_glusterfs_block_host_vol_create: true
+
+# Size in GB, that will be allocated to the GlusterFS_Block volume
+openshift_storage_glusterfs_block_host_vol_size: 300
+
+## StorageClasses ##
+# Automatically create a StorageClass for GlusterFS
+openshift_storage_glusterfs_storageclass: true
+
+# Sets the GlusterFS StorageClass as cluster-wide default
+openshift_storage_glusterfs_storageclass_default: false
+
+# Automatically create a StorageClass for GlusterFS_Block
+openshift_storage_glusterfs_block_storageclass: true
+
+# Sets the GlusterFS_Block StorageClass as cluster-wide default
+openshift_storage_glusterfs_block_storageclass_default: false
+
+# Seconds to wait for pods to become ready
+openshift_storage_glusterfs_timeout: 600

@@ -1,0 +1,65 @@
+[OSEv3:vars]
+# This variable configures the subnet in which services will be created within
+# the OpenShift Origin SDN. This network block should be private and must
+# not conflict with any existing network blocks in your infrastructure to
+# which pods, nodes, or the master may require access to, or the installation
+# will fail. Defaults to 172.30.0.0/16, and cannot be re-configured after
+# deployment.
+openshift_portal_net=172.30.32.0/19
+
+# This variable overrides the SDN cluster network CIDR block. This is
+# the network from which pod IPs are assigned. This network block should
+# be a private block and must not conflict with existing network blocks
+# in your infrastructure to which pods, nodes, or the master may require
+# access.
+osm_cluster_network_cidr=172.30.0.0/19
+
+# DNS related entries that differ for each cluster
+openshift_master_default_subdomain=services.tld.xx
+openshift_console_hostname=console1.services.tld.xx
+openshift_master_cluster_hostname=ocpconsole1.tld.xx
+openshift_master_cluster_public_hostname=ocpconsole1.tld.xx
+openshift_metrics_hawkular_hostname=hawkular-metrics-cluster1.tld.xx
+openshift_logging_kibana_hostname=kibana1.services.tld.xx
+openshift_grafana_hostname=grafana1.services.tld.xx
+openshift_prometheus_hostname=prometheus1.services.tld.xx
+openshift_prometheus_alerts_hostname=alerts1.services.tld.xx
+openshift_prometheus_alertmanager_hostname=alertsmanager1.services.tld.xx
+openshift_hosted_registry_hostname=registry1.services.tld.xx
+openshift_hosted_registry_console_hostname=registry-console1.services.tld.xx
+
+# Allocatable System Resources per OCP group
+master_memory=512Mb
+appnode_memory=512Mb
+infranode_memory=512Mb
+
+# Create an OSEv3 group that contains all the main groups
+[OSEv3:children]
+masters
+nodes
+infras
+etcd
+
+# Each master node should also be configured for etcd
+[etcd:children]
+masters
+
+[nodes:children]
+masters
+appnodes
+infras
+
+[masters]
+pro-osm-001-v.tld.xx openshift_node_group_name="node-config-master"
+pro-osm-002-v.tld.xx openshift_node_group_name="node-config-master"
+pro-osm-003-v.tld.xx openshift_node_group_name="node-config-master"
+
+[appnodes]
+pro-osa-001-v.tld.xx openshift_node_group_name="node-config-compute" openshift_node_labels="{'fuse-license': 'true'}"
+pro-osa-002-v.tld.xx openshift_node_group_name="node-config-compute" openshift_node_labels="{'fuse-license': 'true'}"
+pro-osa-003-v.tld.xx openshift_node_group_name="node-config-compute" openshift_node_labels="{'fuse-license': 'true'}"
+
+[infras]
+pro-osi-001-v.tld.xx openshift_node_group_name="node-config-infra"
+pro-osi-002-v.tld.xx openshift_node_group_name="node-config-infra"
+pro-osi-003-v.tld.xx openshift_node_group_name="node-config-infra"

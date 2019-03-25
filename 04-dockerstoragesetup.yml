@@ -1,0 +1,219 @@
+---
+- hosts:
+    - common_openshift
+  vars:
+    # '/dev/' is prepended to this value
+    docker_device: sdc
+  tasks:
+  - name: Install docker
+    yum:
+      name: docker
+      state: present
+
+  - name: docker-storage-setup (remove overlay2)
+    lineinfile:
+      path: /etc/sysconfig/docker-storage-setup
+      regexp: overlay2
+      state: absent
+    tags:
+      - storage-setup
+
+  - name: docker-storage-setup (add DEV=vdb)
+    lineinfile:
+      path: /etc/sysconfig/docker-storage-setup
+      regexp: DEVS
+      line: DEVS={{ docker_device }}
+    tags:
+      - storage-setup
+
+  - name: docker-storage-setup (add VG=dockervg)
+    lineinfile:
+      path: /etc/sysconfig/docker-storage-setup
+      regexp: VG=
+      line: VG=dockervg
+    tags:
+      - storage-setup
+
+  - name: docker-storage-setup (add WIPE_SIGNATURES=true)
+    lineinfile:
+      path: /etc/sysconfig/docker-storage-setup
+      regexp: WIPE_SIGNATURES
+      line: WIPE_SIGNATURES=true
+    tags:
+      - storage-setup
+
+- hosts:
+    - common_openshift_sys-dev1_master
+  vars:
+    etcd_device: /dev/sdd
+  gather_facts: no
+  become: yes
+  tasks:
+
+  - name: Install lvm2
+    yum:
+      name: lvm2
+      state: present
+
+  - name: Create PV and LV on "{{ etcd_device }}"
+    lvg:
+      vg: etcd-vg
+      pvs: "{{ etcd_device }}"
+      state: present
+
+  - name: Create LV etcd-lv
+    lvol:
+      vg: etcd-vg
+      lv: etcd-lv
+      size: 100%VG
+      state: present
+
+  - name: Mkfs xfs on etcd-lv
+    filesystem:
+      fstype: xfs
+      dev: /dev/mapper/etcd--vg-etcd--lv
+#    command: mkfs.xfs /dev/mapper/etcd--vg-etcd--lv
+
+  - name: Make /var/lib/etcd
+    file:
+      path: /var/lib/etcd
+      state: directory
+
+  - name: Update fstab
+    lineinfile:
+      path: /etc/fstab
+      regexp: etcd
+      line: '/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0'
+
+  - name: Remove origin fstab entry
+    lineinfile:
+      path: /etc/fstab
+      regexp: origin
+      line: '/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0'
+      state: absent
+
+  - name: Mount filesystem
+    shell: 'mount -a'
+
+- hosts:
+  - common_openshift
+  - "!common_openshift_sys-dev1_master"
+  - "!common_openshift_sys-dev1_lb"
+  vars:
+    origin_device: /dev/sdd
+  gather_facts: no
+  become: yes
+  tasks:
+
+  - name: Install lvm2
+    yum:
+      name: lvm2
+      state: present
+
+  - name: Create PV and LV on "{{ origin_device }}"
+    lvg:
+      vg: origin-vg
+      pvs: "{{ origin_device }}"
+      state: present
+
+  - name: Create LV origin-lv
+    lvol:
+      vg: origin-vg
+      lv: origin-lv
+      size: 100%VG
+      state: present
+
+#    command: pvcreate -ff -y "{{ origin_device }}"
+#    command: vgcreate origin-vg "{{ origin_device }}"
+#    command: lvcreate -n origin-lv -l 100%VG origin-vg
+
+  - name: Mkfs xfs on origin-lv
+    filesystem:
+      fstype: xfs
+      dev: /dev/mapper/origin--vg-origin--lv
+
+#    command: mkfs.xfs /dev/mapper/origin--vg-origin--lv
+
+  - name: Make /var/lib/origin
+    file:
+      path: /var/lib/origin
+      state: directory
+
+  - name: Update fstab
+    lineinfile:
+      path: /etc/fstab
+      regexp: origin
+      line: '/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0'
+
+  - name: Mount filesystem
+    shell: 'mount -a'
+
+- hosts:
+  - common_openshift_sys-dev1_lb
+  gather_facts: no
+  tasks:
+  - name: Remove origin fstab entry
+    lineinfile:
+      path: /etc/fstab
+      regexp: origin
+      line: '/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0'
+      state: absent
+
+  - name: Update fstab
+    lineinfile:
+      path: /etc/fstab
+      regexp: etcd
+      line: '/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0'
+      state: absent
+
+- hosts:
+    - common_openshift
+  gather_facts: no
+  become: yes
+  tasks:
+
+  - name: Make sure docker is stopped
+    systemd:
+      name: docker
+      state: stopped
+
+#    command: "systemctl stop docker"
+
+  - name: Make sure docker storage is stopped
+    systemd:
+      name: docker
+      state: stopped
+
+#    command: "systemctl stop docker-storage-setup"
+
+  - name: Stop docker mount
+    systemd:
+      name: var-lib-docker-containers.mount
+      state: stopped
+    ignore_errors: true
+
+  - name: Remove /etc/sysconfig/docker-storage
+    file:
+      path: /etc/sysconfig/docker-storage
+      state: absent
+
+  - name: Remove /var/lib/docker
+    file:
+      path: /var/lib/docker
+      state: absent
+
+  - name: Remove the logical volume.
+    lvol:
+      vg: dockervg
+      lv: docker-pool
+      state: absent
+      force: yes
+
+  - name: Run container-storage-setup
+    command: "container-storage-setup"
+
+  - name: Start and enable docker
+    systemd:
+      name: docker.service
+      state: started
+      enabled: yes

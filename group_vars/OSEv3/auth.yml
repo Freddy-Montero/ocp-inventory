@@ -1,0 +1,26 @@
+# LDAP Auth & HTPasswd
+openshift_master_identity_providers:
+  - name: ldap
+    challenge: true
+    login: true
+    kind: LDAPPasswordIdentityProvider
+    attributes:
+      id:
+        - sAMAccountName
+      email:
+        - mail
+      name:
+        - cn
+      preferredUsername:
+        - sAMAccountName
+    bindDN: "{{ svc_binduser.username }}@{{ svc_domain }}"
+    bindPassword: "{{ svc_binduser.password }}"
+    insecure: false
+    url: ldaps://accounts-ldap.tld.XX:636/dc=accounts,dc=ad,dc=TLD,dc=XX?sAMAccountName
+  - name: htpasswd_auth
+    login: true
+    challenge: true
+    kind: HTPasswdPasswordIdentityProvider
+
+openshift_master_ldap_ca_file: /etc/pki/tls/certs/addtrust_external_ca_root.pem
+openshift_master_htpasswd_file: /etc/ansible/htpasswd.file
