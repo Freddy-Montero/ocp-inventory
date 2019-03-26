@@ -1,0 +1,7 @@
+# Cluster configuration via role openshift-provision --
+# located at /etc/ansible/roles
+# This role is maintained externally by Jonathan Kupferer
+# URL: https://github.com/gnuthought/ansible-role-openshift-provision
+- hosts: masters[0]
+  roles:
+  - openshift-provision

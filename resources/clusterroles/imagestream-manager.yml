@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ClusterRole
+metadata:
+  name: imagestream-manager
+rules:
+- apiGroups:
+  - ""
+  attributeRestrictions: null
+  resources:
+  - imagestreamimages
+  - imagestreammappings
+  - imagestreams
+  - imagestreams/secrets
+  - imagestreamtags
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  attributeRestrictions: null
+  resources:
+  - imagestreams/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  attributeRestrictions: null
+  resources:
+  - imagestreams/layers
+  verbs:
+  - get
+  - update
+- apiGroups:
+  - ""
+  attributeRestrictions: null
+  resources:
+  - imagestreamimports
+  verbs:
+  - create
