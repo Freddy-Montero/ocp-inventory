@@ -1,0 +1,41 @@
+### DESCRIPTION
+#
+# Label users primary-group.
+#
+### USAGE
+#
+# Included in maintenance.yml playbook:
+#
+#     - hosts: masters[0]
+#       tasks:
+#       - include: tasks/label-users-primary-group.yml
+#         vars:
+#           group_priority:
+#           - users
+#           - admins
+#
+### VARIABLES
+#
+# group_priority - Array of groups in order of priority, lowest to highest
+#
+### DEPENDENCIES
+#
+# tasks/get-all-users.yml
+# tasks/get-users-by-group.yml
+# tasks/label-user-primary-group.yml
+#
+
+- include_tasks: tasks/get-all-users.yml
+
+- include_tasks: tasks/get-users-by-group.yml
+  with_items: "{{ group_priority }}"
+  loop_control:
+    loop_var: groupname
+- include_tasks: tasks/label-user-primary-group.yml
+  with_dict: "{{ openshift_users | default({}) }}"
+  vars:
+    username: "{{ user.key }}"
+    primary_group: "{{ user.value.primary_group }}"
+  when: '"exists" in user.value and user.value.exists'
+  loop_control:
+    loop_var: user

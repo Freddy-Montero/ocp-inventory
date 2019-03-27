@@ -1,0 +1,39 @@
+### DESCRIPTION
+#
+# Set quota for user based on primary group membership, as indicated by label
+# "primary-group".
+#
+### USAGE
+#
+# - hosts: masters[0]
+#   tasks:
+#   - include: tasks/set-cluster-quota-by-primary-group.yml
+#     vars:
+#       primary_group: users
+#       quota:
+#         hard:
+#           requests.cpu: "1000m"
+#           requests.memory: "5Gi"
+#           limits.memory: "5Gi"
+#
+### VARIABLES
+#
+# primary_group - value to match in primary-group
+# quota - quota definition
+#
+### DEPENDENCIES
+#
+# tasks/apply-user-quota.yml
+#
+
+- name: Get users with primary_group {{ primary_group }}
+  command: >
+    oc get user -l primary-group={{ primary_group }}
+    --template '{{ '{{ range .items }}{{ .metadata.name }}{{ "\n" }}{{ end }}' }}'
+  changed_when: false
+  register: get_users_by_primary_group
+
+- include_tasks: tasks/apply-user-quota.yml
+  with_items: "{{ get_users_by_primary_group.stdout_lines }}"
+  loop_control:
+    loop_var: username

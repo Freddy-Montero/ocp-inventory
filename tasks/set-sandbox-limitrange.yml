@@ -1,0 +1,40 @@
+### DESCRIPTION
+#
+# Set compute limit range on sandbox and feature branch project.
+#
+# The compute limit range is set on all self-provisioned projects by the
+# project request template. This task is used to adjust the limit range on
+# existing sandbox projects.
+#
+### USAGE
+#
+# Included from `tasks/set-sandbox-limitranges.yml`
+#
+### VARIABLES
+#
+# limitrange - description of desired limit range
+#
+# project - project in which to set limit range
+#
+### DEPENDENCIES
+#
+# none
+#
+
+- name: Get compute LimitRange for {{ project.metadata.name }}
+  command: >
+    oc get limitrange compute -n {{ project.metadata.name }} -o json
+  changed_when: false
+  failed_when: false
+  register: get_current_limitrange
+
+- name: Update compute LimitRange for {{ project.metadata.name }}
+  command: >
+    oc patch limitrange compute -n {{ project.metadata.name }}
+    -p {{ patch | to_json | quote }}
+  vars:
+    patch: "{{ limitrange }}"
+  when: >-
+    get_current_limitrange.rc == 0 and
+    limitrange.spec !=
+      get_current_limitrange.stdout | from_json | json_query('spec')

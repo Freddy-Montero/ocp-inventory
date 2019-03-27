@@ -1,0 +1,27 @@
+### DESCRIPTION
+#
+# Get all user information and populate openshift_users variable.
+#
+### USAGE
+#
+# This task is called by label-users-primary-group.yml
+#
+### VARIABLES
+#
+# none.
+#
+### DEPENDENCIES
+#
+# none.
+#
+
+- name: Get all users
+  command: >
+    oc get user
+    --template '{{ '{{ range .items }}{{ .metadata.name }}{{ "\n" }}{{ end }}' }}'
+  changed_when: false
+  register: get_all_users
+
+- set_fact:
+    openshift_users: '{{ openshift_users | default({}) | combine({item: {"primary_group":"none", "exists":true}}) }}'
+  with_items: "{{get_all_users.stdout_lines}}"

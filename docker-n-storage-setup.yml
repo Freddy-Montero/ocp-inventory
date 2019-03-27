@@ -1,8 +1,7 @@
 ---
 - hosts:
-    - common_openshift
+    - nodes
   vars:
-    # '/dev/' is prepended to this value
     docker_device: sdc
   tasks:
   - name: Install docker
@@ -43,11 +42,10 @@
       - storage-setup
 
 - hosts:
-    - common_openshift_sys-dev1_master
+    - masters
   vars:
     etcd_device: /dev/sdd
   gather_facts: no
-  become: yes
   tasks:
 
   - name: Install lvm2
@@ -72,7 +70,6 @@
     filesystem:
       fstype: xfs
       dev: /dev/mapper/etcd--vg-etcd--lv
-#    command: mkfs.xfs /dev/mapper/etcd--vg-etcd--lv
 
   - name: Make /var/lib/etcd
     file:
@@ -96,13 +93,10 @@
     shell: 'mount -a'
 
 - hosts:
-  - common_openshift
-  - "!common_openshift_sys-dev1_master"
-  - "!common_openshift_sys-dev1_lb"
+  - nodes
   vars:
-    origin_device: /dev/sdd
+    origin_device: /dev/sde
   gather_facts: no
-  become: yes
   tasks:
 
   - name: Install lvm2
@@ -123,16 +117,10 @@
       size: 100%VG
       state: present
 
-#    command: pvcreate -ff -y "{{ origin_device }}"
-#    command: vgcreate origin-vg "{{ origin_device }}"
-#    command: lvcreate -n origin-lv -l 100%VG origin-vg
-
   - name: Mkfs xfs on origin-lv
     filesystem:
       fstype: xfs
       dev: /dev/mapper/origin--vg-origin--lv
-
-#    command: mkfs.xfs /dev/mapper/origin--vg-origin--lv
 
   - name: Make /var/lib/origin
     file:
@@ -149,27 +137,8 @@
     shell: 'mount -a'
 
 - hosts:
-  - common_openshift_sys-dev1_lb
+    - nodes
   gather_facts: no
-  tasks:
-  - name: Remove origin fstab entry
-    lineinfile:
-      path: /etc/fstab
-      regexp: origin
-      line: '/dev/mapper/origin--vg-origin--lv /var/lib/origin xfs defaults 0 0'
-      state: absent
-
-  - name: Update fstab
-    lineinfile:
-      path: /etc/fstab
-      regexp: etcd
-      line: '/dev/mapper/etcd--vg-etcd--lv /var/lib/etcd xfs defaults 0 0'
-      state: absent
-
-- hosts:
-    - common_openshift
-  gather_facts: no
-  become: yes
   tasks:
 
   - name: Make sure docker is stopped
@@ -177,14 +146,10 @@
       name: docker
       state: stopped
 
-#    command: "systemctl stop docker"
-
   - name: Make sure docker storage is stopped
     systemd:
       name: docker
       state: stopped
-
-#    command: "systemctl stop docker-storage-setup"
 
   - name: Stop docker mount
     systemd:

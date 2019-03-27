@@ -1,0 +1,43 @@
+### DESCRIPTION
+#
+# Add all authenticated users to users group. This step is required to
+# guarantee that the maintenance has run before users are able to provision
+# projects. This allows quotas to be set for users before they may provision
+# OCP resources.
+#
+### USAGE
+#
+# Included in maintenance.yml:
+#
+#     - hosts: masters[0]
+#       tasks:
+#       - include: tasks/users-group.yml
+#
+### VARIABLES
+#
+# none
+#
+### DEPENDENCIES
+#
+# none
+#
+
+- name: Get all users
+  command: >
+    oc get users
+    --template '{{ '{{ range .items }}{{ .metadata.name }}{{ "\n" }}{{ end }}' }}'
+  changed_when: false
+  register: get_all_users
+
+- name: Get users from users group
+  command: >
+     oc get group users
+     --template '{{ '{{ range .users }}{{ . }}{{ "\n" }}{{ end }}' }}'
+  changed_when: false
+  register: get_users_group_members
+
+- name: Add users to users group
+  command: >
+    oc adm groups add-users users {{ item }}
+  when: item not in get_users_group_members.stdout_lines
+  with_items: "{{ get_all_users.stdout_lines }}"

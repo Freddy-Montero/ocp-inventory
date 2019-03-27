@@ -1,0 +1,27 @@
+### DESCRIPTION
+#
+# Get user information by group and populate openshift_users variable.
+#
+### USAGE
+#
+# This task is called by label-users-primary-group.yml
+#
+### VARIABLES
+#
+# none.
+#
+### DEPENDENCIES
+#
+# none.
+#
+
+- name: Get users in group {{ groupname }}
+  command: >
+    oc get group {{ groupname }}
+    --template '{{ '{{ range .users }}{{ . }}{{ "\n" }}{{ end }}' }}'
+  changed_when: false
+  register: get_users_in_group
+
+- set_fact:
+    openshift_users: '{{ openshift_users | default({}) | combine({item: {"primary_group":groupname}}, recursive=True) }}'
+  with_items: "{{get_users_in_group.stdout_lines}}"

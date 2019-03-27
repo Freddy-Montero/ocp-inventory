@@ -1,0 +1,30 @@
+### DESCRIPTION
+#
+# Set compute limit range on sandbox and feature branch project.
+#
+### USAGE
+#
+#
+#
+### VARIABLES
+#
+# limit_range
+#
+### DEPENDENCIES
+#
+# tasks/set-sandbox-limitrange.yml
+#
+
+- name: Get all projects
+  command:
+    oc get project -o json
+  changed_when: false
+  register: get_all_projects
+
+- include_tasks: tasks/set-sandbox-limitrange.yml
+  with_items: >
+    {{ get_all_projects.stdout | from_json | json_query('items') }}
+  loop_control:
+    loop_var: project
+  when: >
+    project.metadata.labels is not defined or project.metadata.labels["application"] is not defined

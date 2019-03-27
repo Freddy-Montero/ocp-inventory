@@ -1,0 +1,30 @@
+### DESCRIPTION
+#
+# Label user primary-group.
+#
+### USAGE
+#
+# This task is called by label-users-primary-group.yml
+#
+### VARIABLES
+#
+# username - User to label primary-group
+# primary_group - Group name to apply
+#
+### DEPENDENCIES
+#
+# none.
+#
+
+- name: Get primary-group label for {{ username }}
+  command: >
+    oc get user {{ username }}
+    --template '{{ '{{ index .metadata.labels "primary-group" }}' }}'
+  changed_when: false
+  failed_when: false
+  register: get_user_current_label
+
+- name: Label {{ username }} primary-group={{ primary_group }}
+  command: >
+    oc label user {{ username }} primary-group={{ primary_group }} --overwrite
+  when: get_user_current_label.stdout != primary_group

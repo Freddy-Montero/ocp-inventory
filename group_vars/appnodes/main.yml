@@ -20,5 +20,5 @@ journald_vars_to_replace:
 - { var: ForwardToWall, val: no }
 
 # https://docs.openshift.com/container-platform/3.9/admin_guide/allocating_node_resources.html
-#openshift_node_kubelet_args:
-#  system-reserved: ['memory={{ appnode_memory }}']
+openshift_node_kubelet_args:
+  system-reserved: ['memory={{ appnode_memory }}']

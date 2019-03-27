@@ -1,0 +1,53 @@
+### DESCRIPTION
+#
+# Apply quota definition to user.
+#
+### USAGE
+#
+# This task is called by tasks/set-cluster-quota-by-primary-group.yml
+#
+### VARIABLES
+#
+# username - username for which to set quota
+# quota - quota to apply
+#
+### DEPENDENCIES
+#
+# none
+#
+
+- name: Get quota for {{ username }}
+  command: oc get ClusterResourceQuota user-{{ username | regex_replace('[@:]','-') | lower }} -o json
+  changed_when: false
+  failed_when: false
+  register: get_quota
+
+- when: get_quota.rc != 0
+  name: Create quota for {{ username }}
+  shell: >
+    echo {{ quotadef | to_json | quote }}
+    | oc create -f -
+  vars:
+    quotadef:
+      apiVersion: v1
+      kind: ClusterResourceQuota
+      metadata:
+        name: user-{{ username | regex_replace('[@:]','-') | lower }}
+      spec:
+        quota: "{{ quota }}"
+        selector:
+          annotations:
+            openshift.io/requester: "{{ username }}"
+
+- when: >
+    get_quota.rc == 0 and
+    get_quota.stdout | from_json != get_quota.stdout | from_json | combine({'spec':{'quota':quota}}, recursive=True)
+  name: Update quota for {{ username }}
+  command: >
+    oc patch ClusterResourceQuota
+    user-{{ username | regex_replace('[@:]','-') | lower }}
+    -p {{ patch | to_json | quote }}
+  vars:
+    patch:
+      spec:
+        quota: "{{ quota }}"

@@ -4,25 +4,28 @@ openshift_clusters:
 # Groups and its associated Users
   groups:
 
+  # Basic Users
+  - name: users
+
   # Developer Users
   - name: developers
     members:
-    - riov02
+    - develop-user
 
   # Developer Leads
   - name: project-leads
     members:
-    - riov01
+    - develop-lead
 
   # OpenShift Engineers (Operators) with Edit Role
   - name: paas-engineers
     members:
-    - fmic02
+    - pass-user
 
   # OpenShift Admis with Cluster-Admin Role
   - name: admins
     members:
-    - fmic00
+    - admin-user
 
   resource_path:
   - resources
@@ -74,6 +77,25 @@ openshift_clusters:
 
     resources:
     - templates/project-request.template.yml.j2
+
+  # Jenkins Project
+  - name: jenkins
+    description: Global Jenkins Project
+    labels:
+      application: jenkins
+
+    resources:
+    - apiVersion: v1
+      kind: ResourceQuota
+      metadata:
+        name: compute
+      spec:
+        hard:
+          requests.cpu: "2"
+          limits.cpu: "4"
+          requests.memory: "6Gi"
+          limits.memory: "6Gi"
+          requests.storage: "50Gi"
 
   # OpenShift Project
   - name: openshift
@@ -149,49 +171,3 @@ openshift_clusters:
   - name: openshift-sdn
     description: >
       OpenShift Cluster Network Infrastructure (OVS)
-
-  # Jenkins Project
-  - name: jenkins
-    description: Global Jenkins Project
-    labels:
-      application: jenkins
-
-    - apiVersion: v1
-      kind: ResourceQuota
-      metadata:
-        name: compute
-      spec:
-        hard:
-          requests.cpu: "2"
-          limits.cpu: "4"
-          requests.memory: "4Gi"
-          limits.memory: "4Gi"
-          requests.storage: "75Gi"
-    - apiVersion: v1
-      kind: LimitRange
-      metadata:
-        name: compute
-      spec:
-        limits:
-        - max:
-            cpu: 500m
-            memory: 2Gi
-          min:
-            cpu: 50m
-            memory: 4Mi
-          type: Pod
-        - default:
-            cpu: 500m
-            memory: 2Gi
-          defaultRequest:
-            cpu: 50m
-            memory: 2Gi
-          max:
-            cpu: 500m
-            memory: 2Gi
-          maxLimitRequestRatio:
-            cpu: "10"
-          min:
-            cpu: 50m
-            memory: 4Mi
-          type: Container
